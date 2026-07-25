@@ -1,0 +1,324 @@
+/* ======================================================
+   SCHEDARIO — stile
+   Ispirazione: schedario di biblioteca / talloncini da biglietto.
+   Ogni categoria ha un colore "tab" come le vecchie schede a colori,
+   e ogni voce in archivio è un talloncino con un timbro-voto.
+   ====================================================== */
+
+:root {
+  --bg: #12151c;
+  --bg-elevated: #181d27;
+  --card: #1e2430;
+  --card-border: #2b3243;
+  --ink: #ede8dd;
+  --ink-dim: #8d94a5;
+
+  --rose: #d98aa0;    /* Anime */
+  --teal: #5fb6a6;    /* Serie TV */
+  --gold: #e3a75c;    /* Film */
+  --violet: #9b90dd;  /* Giochi */
+  --danger: #d1615c;
+
+  --font-display: "Fraunces", serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+
+body {
+  padding: 32px 20px 64px;
+}
+
+#app {
+  max-width: 640px;
+  margin: 0 auto;
+}
+
+button, input, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}
+
+/* ---------- colori per categoria ---------- */
+.accent-rose   { --accent: var(--rose); }
+.accent-teal   { --accent: var(--teal); }
+.accent-gold   { --accent: var(--gold); }
+.accent-violet { --accent: var(--violet); }
+
+/* ====================== HOME ====================== */
+.home { padding-top: 24px; }
+
+.eyebrow {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.title {
+  margin: 4px 0 32px;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 2.6rem;
+  letter-spacing: -0.01em;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.category-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 28px 12px 22px;
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-top: 4px solid var(--accent);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.category-card:hover {
+  transform: translateY(-2px);
+  background: var(--bg-elevated);
+}
+
+.category-icon { font-size: 2rem; }
+
+.category-label {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.05rem;
+}
+
+/* ====================== VISTA CATEGORIA ====================== */
+.category-header {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.back-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--ink-dim);
+  cursor: pointer;
+}
+.back-btn:hover { color: var(--ink); }
+
+.category-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.6rem;
+}
+
+.tabs {
+  display: flex;
+  gap: 20px;
+  border-bottom: 1px solid var(--card-border);
+  margin-bottom: 22px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  padding: 8px 2px 12px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+  cursor: pointer;
+  transform: translateY(1px);
+}
+
+.tab-btn.active {
+  color: var(--ink);
+  border-bottom-color: var(--accent);
+}
+
+/* ====================== FORM ====================== */
+.entry-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.field-label {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-dim);
+}
+
+.field input,
+.field textarea {
+  background: var(--bg-elevated);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 0.95rem;
+}
+
+.field textarea { resize: vertical; }
+
+.field-checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+}
+.field-checkbox input { width: 18px; height: 18px; accent-color: var(--accent); }
+
+.submit-btn {
+  margin-top: 6px;
+  align-self: flex-start;
+  background: var(--accent);
+  color: var(--bg);
+  border: none;
+  border-radius: 6px;
+  padding: 11px 22px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.submit-btn:hover { opacity: 0.88; }
+.submit-btn:disabled { opacity: 0.6; cursor: default; }
+
+.form-feedback {
+  min-height: 1.2em;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  color: var(--ink-dim);
+}
+.form-feedback.success { color: var(--accent); }
+.form-feedback.error { color: var(--danger); }
+
+/* ====================== ARCHIVIO ====================== */
+.archive-status {
+  color: var(--ink-dim);
+  text-align: center;
+  padding: 32px 12px;
+  font-size: 0.92rem;
+}
+.archive-status.error { color: var(--danger); }
+
+.archive-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.archive-card {
+  background: var(--card);
+  border: 1px solid var(--card-border);
+  border-left: 4px solid var(--accent);
+  border-radius: 8px;
+  padding: 16px 18px 18px;
+}
+
+/* la riga tratteggiata che imita la perforazione di un talloncino */
+.archive-card::before {
+  content: "";
+  display: block;
+  border-top: 2px dashed var(--card-border);
+  margin-bottom: 14px;
+}
+
+.archive-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.archive-card-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.12rem;
+}
+
+.vote-stamp {
+  flex: none;
+  width: 2.3em;
+  height: 2.3em;
+  border-radius: 50%;
+  border: 2px solid var(--accent);
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: rotate(-8deg);
+}
+
+.archive-card-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.meta-chip {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-dim);
+  background: var(--bg-elevated);
+  border: 1px solid var(--card-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+
+.archive-card-note {
+  margin: 12px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+/* ====================== RESPONSIVE ====================== */
+@media (max-width: 380px) {
+  .title { font-size: 2.1rem; }
+  .category-card { padding: 22px 8px 18px; }
+}
