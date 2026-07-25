@@ -22,11 +22,11 @@ const CATEGORIES = {
     fields: [
       { key: "nome", label: "Nome serie", type: "text", required: true },
       { key: "stagione", label: "Stagione", type: "number", min: 1, step: 1 },
-      { key: "episodiTotali", label: "Episodi totali (stagione)", type: "number", min: 1, step: 1 },
-      { key: "durata", label: "Durata totale", type: "text", placeholder: "es. 4h 30m" },
+      { key: "episodiTotali", label: "Episodi totali", type: "number", min: 1, step: 1 },
+      { key: "durata", label: "Durata totale", type: "text"},
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: 0.5 },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con la ragazza", type: "checkbox" }
+      { key: "conLore", label: "Visto con Lore", type: "checkbox" }
     ]
   },
   serie: {
@@ -36,11 +36,11 @@ const CATEGORIES = {
     fields: [
       { key: "nome", label: "Nome serie", type: "text", required: true },
       { key: "stagione", label: "Stagione", type: "number", min: 1, step: 1 },
-      { key: "episodiTotali", label: "Episodi totali (stagione)", type: "number", min: 1, step: 1 },
-      { key: "durata", label: "Durata totale", type: "text", placeholder: "es. 4h 30m" },
+      { key: "episodiTotali", label: "Episodi totali", type: "number", min: 1, step: 1 },
+      { key: "durata", label: "Durata totale", type: "text" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: 0.5 },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con la ragazza", type: "checkbox" }
+      { key: "conLore", label: "Visto con Lore", type: "checkbox" }
     ]
   },
   film: {
@@ -49,10 +49,11 @@ const CATEGORIES = {
     accent: "gold",
     fields: [
       { key: "nome", label: "Nome film", type: "text", required: true },
-      { key: "durata", label: "Durata totale", type: "text", placeholder: "es. 2h 10m" },
+      { key: "durata", label: "Durata totale", type: "text" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: 0.5 },
+	  { key: "data", label: "Visto il", type: "date" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con la ragazza", type: "checkbox" }
+      { key: "conLore", label: "Visto con Lore", type: "checkbox" }
     ]
   },
   giochi: {
@@ -61,6 +62,7 @@ const CATEGORIES = {
     accent: "violet",
     fields: [
       { key: "nome", label: "Nome gioco", type: "text", required: true },
+	  { key: "durata", label: "Durata totale", type: "text" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: 0.5 },
       { key: "finitoIl", label: "Finito il", type: "date" },
       { key: "opinione", label: "Opinione", type: "textarea" }
@@ -89,8 +91,8 @@ function render() {
 
 function renderHome() {
   const wrap = el("div", "home");
-  wrap.appendChild(el("p", "eyebrow", "il tuo diario di visione"));
-  wrap.appendChild(el("h1", "title", "Schedario"));
+  wrap.appendChild(el("p", "eyebrow", "Alessio Avarello"));
+  wrap.appendChild(el("h1", "title", "Tracker"));
 
   const grid = el("div", "category-grid");
   Object.keys(CATEGORIES).forEach(function (key) {
