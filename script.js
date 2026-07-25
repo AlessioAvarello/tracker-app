@@ -23,8 +23,8 @@ const CATEGORIES = {
       { key: "nome", label: "Nome serie", type: "text", required: true },
       { key: "stagione", label: "Stagione", type: "number", min: 1, step: 1 },
       { key: "episodiTotali", label: "Episodi totali", type: "number", min: 1, step: 1 },
-      { key: "durata", label: "Durata totale", type: "text"},
-      { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: 0.5 },
+      { key: "durata", label: "Durata totale", type: "duration" },
+      { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
       { key: "conLore", label: "Visto con Lore", type: "checkbox" }
     ]
@@ -37,8 +37,8 @@ const CATEGORIES = {
       { key: "nome", label: "Nome serie", type: "text", required: true },
       { key: "stagione", label: "Stagione", type: "number", min: 1, step: 1 },
       { key: "episodiTotali", label: "Episodi totali", type: "number", min: 1, step: 1 },
-      { key: "durata", label: "Durata totale", type: "text" },
-      { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: 0.5 },
+      { key: "durata", label: "Durata totale", type: "duration" },
+      { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
       { key: "conLore", label: "Visto con Lore", type: "checkbox" }
     ]
@@ -49,9 +49,9 @@ const CATEGORIES = {
     accent: "gold",
     fields: [
       { key: "nome", label: "Nome film", type: "text", required: true },
-      { key: "durata", label: "Durata totale", type: "text" },
-      { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: 0.5 },
-	  { key: "data", label: "Visto il", type: "date" },
+      { key: "durata", label: "Durata totale", type: "duration" },
+      { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
+      { key: "data", label: "Data", type: "date" },
       { key: "commento", label: "Commento", type: "textarea" },
       { key: "conLore", label: "Visto con Lore", type: "checkbox" }
     ]
@@ -62,8 +62,8 @@ const CATEGORIES = {
     accent: "violet",
     fields: [
       { key: "nome", label: "Nome gioco", type: "text", required: true },
-	  { key: "durata", label: "Durata totale", type: "text" },
-      { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: 0.5 },
+      { key: "ore", label: "Ore", type: "number", min: 0, step: "any" },
+      { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "finitoIl", label: "Finito il", type: "date" },
       { key: "opinione", label: "Opinione", type: "textarea" }
     ]
@@ -171,6 +171,11 @@ function renderForm(categoriaKey) {
     evt.preventDefault();
     const payload = { categoria: categoriaKey };
     cat.fields.forEach(function (field) {
+      if (field.type === "duration") {
+        payload.durataOre = form.querySelector('[name="durataOre"]').value;
+        payload.durataMinuti = form.querySelector('[name="durataMinuti"]').value;
+        return;
+      }
       const input = form.querySelector('[name="' + field.key + '"]');
       payload[field.key] = field.type === "checkbox" ? input.checked : input.value;
     });
@@ -209,6 +214,37 @@ function renderField(field) {
     input.name = field.key;
     group.appendChild(input);
     group.appendChild(el("span", "field-label", field.label));
+    return group;
+  }
+
+  if (field.type === "duration") {
+    group.appendChild(el("span", "field-label", field.label));
+    const row = el("div", "field-duration-inputs");
+
+    const oreWrap = el("span", "duration-input");
+    oreWrap.appendChild(el("span", "duration-input-label", "Ore"));
+    const oreInput = document.createElement("input");
+    oreInput.type = "number";
+    oreInput.min = 0;
+    oreInput.step = "1";
+    oreInput.name = "durataOre";
+    oreInput.placeholder = "0";
+    oreWrap.appendChild(oreInput);
+
+    const minWrap = el("span", "duration-input");
+    minWrap.appendChild(el("span", "duration-input-label", "Minuti"));
+    const minInput = document.createElement("input");
+    minInput.type = "number";
+    minInput.min = 0;
+    minInput.max = 59;
+    minInput.step = "1";
+    minInput.name = "durataMinuti";
+    minInput.placeholder = "0";
+    minWrap.appendChild(minInput);
+
+    row.appendChild(oreWrap);
+    row.appendChild(minWrap);
+    group.appendChild(row);
     return group;
   }
 
@@ -266,8 +302,15 @@ function renderArchiveCard(categoriaKey, entry) {
   const cat = CATEGORIES[categoriaKey];
   const card = el("article", "archive-card accent-" + cat.accent);
 
+  const SKIP_IN_META = ["nome", "voto", "commento", "opinione", "stagione"];
+
   const top = el("div", "archive-card-top");
-  top.appendChild(el("h3", "archive-card-title", entry.nome || "(senza nome)"));
+  const heading = el("div", "archive-card-heading");
+  heading.appendChild(el("h3", "archive-card-title", entry.nome || "(senza nome)"));
+  if (entry.stagione !== "" && entry.stagione !== undefined && entry.stagione !== null) {
+    heading.appendChild(el("span", "season-badge", "Stagione " + entry.stagione));
+  }
+  top.appendChild(heading);
   if (entry.voto !== "" && entry.voto !== undefined && entry.voto !== null) {
     top.appendChild(el("span", "vote-stamp", String(entry.voto)));
   }
@@ -275,7 +318,7 @@ function renderArchiveCard(categoriaKey, entry) {
 
   const meta = el("div", "archive-card-meta");
   cat.fields.forEach(function (field) {
-    if (field.key === "nome" || field.key === "voto" || field.key === "commento" || field.key === "opinione") return;
+    if (SKIP_IN_META.indexOf(field.key) !== -1) return;
     const val = entry[field.key];
     if (val === "" || val === undefined || val === null) return;
     if (field.type === "checkbox") {
@@ -284,7 +327,6 @@ function renderArchiveCard(categoriaKey, entry) {
     }
     meta.appendChild(el("span", "meta-chip", field.label + ": " + val));
   });
-  if (entry.data) meta.appendChild(el("span", "meta-chip meta-date", entry.data));
   card.appendChild(meta);
 
   const noteText = entry.commento || entry.opinione;
