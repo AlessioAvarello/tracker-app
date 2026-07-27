@@ -1,4 +1,3 @@
-
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZcpu5-WtfC0CdTDCG-OEjFQgmeP0CvL8yHlVKNO-PevQaGeHC25jzs_Aqwd9nYU32/exec";
 
 // ====================== 2. DEFINIZIONE CATEGORIE ======================
@@ -15,7 +14,8 @@ const CATEGORIES = {
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
       { key: "conLei", label: "Visto con Lore", type: "checkbox" },
-      { key: "filmanime", label: "Film Anime", type: "checkbox" } 
+      { key: "filmanime", label: "Film Anime", type: "checkbox" },
+      { key: "finitoIl", label: "Finito il", type: "date" }
     ]
   },
   serie: {
@@ -29,7 +29,8 @@ const CATEGORIES = {
       { key: "durata", label: "Durata totale", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con Lore", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lore", type: "checkbox" },
+      { key: "finitoIl", label: "Finito il", type: "date" }
     ]
   },
   film: {
@@ -40,22 +41,21 @@ const CATEGORIES = {
       { key: "nome", label: "Nome film", type: "text", required: true },
       { key: "durata", label: "Durata totale", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
-      { key: "data", label: "Data", type: "date" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con Lore", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lore", type: "checkbox" },
+      { key: "finitoIl", label: "Finito il", type: "date" }
     ]
   },
   giochi: {
     label: "Giochi",
     icon: "🎮",
     accent: "green",
-    // Qui tratto "ore" come duration (ore + minuti) per mostrare "4h 30m" coerentemente.
     fields: [
       { key: "nome", label: "Nome gioco", type: "text", required: true },
       { key: "ore", label: "Ore", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
-      { key: "finitoIl", label: "Finito il", type: "date" },
-      { key: "opinione", label: "Opinione", type: "textarea" }
+      { key: "opinione", label: "Opinione", type: "textarea" },
+      { key: "finitoIl", label: "Finito il", type: "date" }
     ]
   }
 };
@@ -278,9 +278,9 @@ function loadArchive(categoriaKey, container) {
       
       // Salviamo le voci in una variabile per non doverle riscaricare ogni volta che ordiniamo
       const originalEntries = res.entries;
-      let currentSort = "default";
+      let currentSort = "timeline"; // <-- IMPOSTATO IL NUOVO DEFAULT AL CRONOLOGICO
 
-      // 1. Recap Generale (quello che abbiamo aggiunto prima)
+      // 1. Recap Generale
       container.appendChild(renderArchiveSummary(categoriaKey, originalEntries));
 
       // 2. Controlli di Ordinamento
@@ -289,8 +289,10 @@ function loadArchive(categoriaKey, container) {
       const select = document.createElement("select");
       select.className = "sort-select";
       
+      // <-- NUOVE OPZIONI DI ORDINAMENTO -->
       const options = [
-        { value: "default", text: "Più recenti (Default)" },
+        { value: "timeline", text: "Cronologico (Mesi)" },
+        { value: "default", text: "Ordine di Inserimento" },
         { value: "nome", text: "Nome (A-Z)" },
         { value: "durata", text: "Durata (Maggiore - Minore)" },
         { value: "lore", text: "Visti con Lore" }
@@ -318,18 +320,25 @@ function loadArchive(categoriaKey, container) {
         // Creiamo una copia della lista originale
         let sorted = originalEntries.slice();
 
-        if (currentSort === "nome") {
-          // Ordine alfabetico (ignorando maiuscole/minuscole)
+        // <-- NUOVA LOGICA DI ORDINAMENTO -->
+        if (currentSort === "timeline") {
+          sorted.sort((a, b) => {
+            const da = parseItalianDate(a.finitoIl);
+            const db = parseItalianDate(b.finitoIl);
+            if (da === null && db === null) return 0;
+            if (da === null) return 1;
+            if (db === null) return -1;
+            return db.getTime() - da.getTime(); 
+          });
+        } else if (currentSort === "nome") {
           sorted.sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
         } else if (currentSort === "durata") {
-          // Ordine di durata/ore usando la funzione che abbiamo creato prima
           sorted.sort((a, b) => {
             const durA = parseDurationStr(a.durata || a.ore || "");
             const durB = parseDurationStr(b.durata || b.ore || "");
-            return durB - durA; // Decrescente (dal più lungo al più corto)
+            return durB - durA;
           });
         } else if (currentSort === "lore") {
-          // Mette chi è stato visto con Lore per primo
           sorted.sort((a, b) => {
             const valA = (a.conLei === true || a.conLei === "Sì") ? 1 : 0;
             const valB = (b.conLei === true || b.conLei === "Sì") ? 1 : 0;
@@ -339,9 +348,31 @@ function loadArchive(categoriaKey, container) {
 
         // Creiamo fisicamente le card
         const list = el("div", "archive-list");
+        let currentMonthYear = null;
+
         sorted.forEach(function (entry) {
+          
+          // <-- CREAZIONE DEI BANNER DELLA TIMELINE -->
+          if (currentSort === "timeline") {
+            const d = parseItalianDate(entry.finitoIl);
+            let monthYearStr = "Senza Data"; 
+            
+            if (d) {
+              const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+              monthYearStr = mesi[d.getMonth()] + " " + d.getFullYear();
+            }
+            
+            if (monthYearStr !== currentMonthYear) {
+              currentMonthYear = monthYearStr;
+              const banner = el("div", "timeline-banner");
+              banner.textContent = monthYearStr;
+              list.appendChild(banner);
+            }
+          }
+
           list.appendChild(renderArchiveCard(categoriaKey, entry));
         });
+        
         listContainer.appendChild(list);
       }
 
@@ -366,13 +397,14 @@ function renderArchiveCard(categoriaKey, entry) {
   const card = el("article", "archive-card accent-" + cat.accent);
 
   // Aggiunto "filmanime" per non mostrarlo come chip generico sotto
-  const SKIP_IN_META = ["nome", "voto", "commento", "opinione", "stagione", "filmanime"];
+  // Aggiunto anche "finitoIl" qui, così non lo mostra come chip ma lo usiamo per la timeline
+  const SKIP_IN_META = ["nome", "voto", "commento", "opinione", "stagione", "filmanime", "finitoIl"];
 
   const top = el("div", "archive-card-top");
   const heading = el("div", "archive-card-heading");
   heading.appendChild(el("h3", "archive-card-title", entry.nome || "(senza nome)"));
   
-  // --- NUOVA LOGICA BADGE STAGIONE / FILM ---
+  // --- LOGICA BADGE STAGIONE / FILM ---
   if (entry.filmanime) {
     heading.appendChild(el("span", "season-badge", "FILM"));
   } else if (entry.stagione !== "" && entry.stagione !== undefined && entry.stagione !== null) {
@@ -429,7 +461,6 @@ function el(tag, className, text) {
 
 // ====================== 7. HELPER RECAP ARCHIVIO ======================
 
-// Converte una stringa "4h 30m" nel totale dei minuti (es. 270)
 function parseDurationStr(str) {
   if (!str) return 0;
   const match = str.match(/(\d+)h\s*(\d+)m/);
@@ -439,7 +470,6 @@ function parseDurationStr(str) {
   return 0;
 }
 
-// Converte i minuti totali di nuovo in formato "Xh Ym"
 function formatMinutesToDuration(totalMin) {
   if (totalMin === 0) return "0h 00m";
   const h = Math.floor(totalMin / 60);
@@ -447,7 +477,6 @@ function formatMinutesToDuration(totalMin) {
   return h + "h " + (m < 10 ? "0" : "") + m + "m";
 }
 
-// Crea il riquadro di recap in base alla categoria
 function renderArchiveSummary(categoriaKey, entries) {
   const wrap = el("div", "archive-summary");
   
@@ -455,13 +484,10 @@ function renderArchiveSummary(categoriaKey, entries) {
   let totalDurationMins = 0;
   let totalEpisodes = 0;
 
-  // Calcola i totali
   entries.forEach(function(entry) {
-    // Somma durata (Film, Anime, Serie) o ore (Giochi)
     if (entry.durata) totalDurationMins += parseDurationStr(entry.durata);
     if (entry.ore) totalDurationMins += parseDurationStr(entry.ore);
 
-    // Somma episodi (Anime, Serie)
     if (entry.episodiTotali) {
       const ep = Number(entry.episodiTotali);
       if (!isNaN(ep)) totalEpisodes += ep;
@@ -470,7 +496,6 @@ function renderArchiveSummary(categoriaKey, entries) {
 
   const formattedDuration = formatMinutesToDuration(totalDurationMins);
 
-  // Costruisce il testo in base alla categoria
   if (categoriaKey === "anime" || categoriaKey === "serie") {
     wrap.appendChild(el("p", "summary-text", "📺 Voci totali: " + totalItems + " | 📼 Episodi visti: " + totalEpisodes + " | ⏱️ Tempo totale: " + formattedDuration));
   } else if (categoriaKey === "film") {
@@ -480,6 +505,16 @@ function renderArchiveSummary(categoriaKey, entries) {
   }
 
   return wrap;
+}
+
+function parseItalianDate(dateStr) {
+  if (!dateStr) return null;
+  const parts = dateStr.split("/");
+  if (parts.length === 3) {
+    return new Date(parts[2], parts[1] - 1, parts[0]);
+  }
+  const d = new Date(dateStr);
+  return isNaN(d.getTime()) ? null : d;
 }
 
 // ====================== AVVIO ======================
