@@ -1,19 +1,17 @@
 /**
- * SCHEDARIO — logica dell'app
- * ----------------------------------------------------
- * Nessun framework: solo JS puro che ricostruisce l'interfaccia dentro
- * #app in base allo stato corrente. Se non hai mai letto codice così,
- * segui i commenti: ogni sezione fa una cosa sola.
+ * SCHEDARIO — logica dell'app (frontend)
+ *
+ * Modifiche principali:
+ * - I campi duration usano name dinamico field.key + "Ore"/"Minuti" (es. "durataOre", "oreOre").
+ * - La categoria "giochi" ora usa type: "duration" per il campo ore, così il frontend fornisce ore/minuti.
+ * - Checkbox rinominato a "conLei" per allinearsi al backend.
+ * - DoGet / renderArchive aspettano che backend fornisca durate come "4h 30m".
  */
 
 // ====================== 1. CONFIGURAZIONE ======================
-// Incolla qui l'URL che ottieni facendo il Deploy > Web App dell'Apps Script
-// (vedi README.md, punto 3). Deve finire con /exec
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZcpu5-WtfC0CdTDCG-OEjFQgmeP0CvL8yHlVKNO-PevQaGeHC25jzs_Aqwd9nYU32/exec";
 
 // ====================== 2. DEFINIZIONE CATEGORIE ======================
-// Questa è l'unica fonte di verità per i campi dei form e dell'archivio.
-// L'ordine e le chiavi (key) devono corrispondere a COLUMN_ORDER in Code.gs.
 const CATEGORIES = {
   anime: {
     label: "Anime",
@@ -26,7 +24,7 @@ const CATEGORIES = {
       { key: "durata", label: "Durata totale", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLore", label: "Visto con Lore", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lei", type: "checkbox" }
     ]
   },
   serie: {
@@ -40,7 +38,7 @@ const CATEGORIES = {
       { key: "durata", label: "Durata totale", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLore", label: "Visto con Lore", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lei", type: "checkbox" }
     ]
   },
   film: {
@@ -53,16 +51,17 @@ const CATEGORIES = {
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "data", label: "Data", type: "date" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLore", label: "Visto con Lore", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lei", type: "checkbox" }
     ]
   },
   giochi: {
     label: "Giochi",
     icon: "🎮",
     accent: "violet",
+    // Qui tratto "ore" come duration (ore + minuti) per mostrare "4h 30m" coerentemente.
     fields: [
       { key: "nome", label: "Nome gioco", type: "text", required: true },
-      { key: "ore", label: "Ore", type: "number", min: 0, step: "any" },
+      { key: "ore", label: "Ore", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "finitoIl", label: "Finito il", type: "date" },
       { key: "opinione", label: "Opinione", type: "textarea" }
@@ -72,9 +71,9 @@ const CATEGORIES = {
 
 // ====================== 3. STATO DELL'APP ======================
 const state = {
-  view: "home",     // "home" | "category"
-  categoria: null,  // "anime" | "serie" | "film" | "giochi"
-  tab: "add"        // "add" | "archive"
+  view: "home",
+  categoria: null,
+  tab: "add"
 };
 
 const app = document.getElementById("app");
@@ -117,7 +116,6 @@ function renderCategory(categoriaKey) {
   const cat = CATEGORIES[categoriaKey];
   const wrap = el("div", "category-view accent-" + cat.accent);
 
-  // header
   const header = el("div", "category-header");
   const back = el("button", "back-btn", "← Categorie");
   back.addEventListener("click", function () {
@@ -129,7 +127,6 @@ function renderCategory(categoriaKey) {
   header.appendChild(el("h2", "category-title", cat.icon + " " + cat.label));
   wrap.appendChild(header);
 
-  // tabs
   const tabs = el("div", "tabs");
   const addTab = el("button", "tab-btn" + (state.tab === "add" ? " active" : ""), "➕ Aggiungi");
   const archiveTab = el("button", "tab-btn" + (state.tab === "archive" ? " active" : ""), "📂 Archivio");
@@ -139,7 +136,6 @@ function renderCategory(categoriaKey) {
   tabs.appendChild(archiveTab);
   wrap.appendChild(tabs);
 
-  // content
   const content = el("div", "tab-content");
   if (state.tab === "add") {
     content.appendChild(renderForm(categoriaKey));
@@ -172,11 +168,13 @@ function renderForm(categoriaKey) {
     const payload = { categoria: categoriaKey };
     cat.fields.forEach(function (field) {
       if (field.type === "duration") {
-        payload.durataOre = form.querySelector('[name="durataOre"]').value;
-        payload.durataMinuti = form.querySelector('[name="durataMinuti"]').value;
+        // nomi dinamici basati su field.key
+        payload[field.key + "Ore"] = form.querySelector('[name="' + field.key + 'Ore"]').value;
+        payload[field.key + "Minuti"] = form.querySelector('[name="' + field.key + 'Minuti"]').value;
         return;
       }
       const input = form.querySelector('[name="' + field.key + '"]');
+      if (!input) return;
       payload[field.key] = field.type === "checkbox" ? input.checked : input.value;
     });
 
@@ -227,7 +225,7 @@ function renderField(field) {
     oreInput.type = "number";
     oreInput.min = 0;
     oreInput.step = "1";
-    oreInput.name = "durataOre";
+    oreInput.name = field.key + "Ore"; // dinamico
     oreInput.placeholder = "0";
     oreWrap.appendChild(oreInput);
 
@@ -238,7 +236,7 @@ function renderField(field) {
     minInput.min = 0;
     minInput.max = 59;
     minInput.step = "1";
-    minInput.name = "durataMinuti";
+    minInput.name = field.key + "Minuti"; // dinamico
     minInput.placeholder = "0";
     minWrap.appendChild(minInput);
 
@@ -337,9 +335,6 @@ function renderArchiveCard(categoriaKey, entry) {
 
 // ====================== 5. CHIAMATE AL BACKEND ======================
 function saveEntry(payload) {
-  // Content-Type "text/plain" (invece di application/json) evita che il
-  // browser mandi una richiesta di preflight CORS, che Apps Script non
-  // gestisce. Il backend fa comunque JSON.parse del contenuto ricevuto.
   return fetch(APPS_SCRIPT_URL, {
     method: "POST",
     headers: { "Content-Type": "text/plain;charset=utf-8" },
