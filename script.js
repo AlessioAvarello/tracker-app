@@ -14,7 +14,8 @@ const CATEGORIES = {
       { key: "durata", label: "Durata totale", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con Lore", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lore", type: "checkbox" },
+      { key: "filmanime", label: "Film Anime", type: "checkbox" } 
     ]
   },
   serie: {
@@ -294,14 +295,21 @@ function renderArchiveCard(categoriaKey, entry) {
   const cat = CATEGORIES[categoriaKey];
   const card = el("article", "archive-card accent-" + cat.accent);
 
-  const SKIP_IN_META = ["nome", "voto", "commento", "opinione", "stagione"];
+  // Aggiunto "filmanime" per non mostrarlo come chip generico sotto
+  const SKIP_IN_META = ["nome", "voto", "commento", "opinione", "stagione", "filmanime"];
 
   const top = el("div", "archive-card-top");
   const heading = el("div", "archive-card-heading");
   heading.appendChild(el("h3", "archive-card-title", entry.nome || "(senza nome)"));
-  if (entry.stagione !== "" && entry.stagione !== undefined && entry.stagione !== null) {
+  
+  // --- NUOVA LOGICA BADGE STAGIONE / FILM ---
+  if (entry.filmanime) {
+    heading.appendChild(el("span", "season-badge", "FILM"));
+  } else if (entry.stagione !== "" && entry.stagione !== undefined && entry.stagione !== null) {
     heading.appendChild(el("span", "season-badge", "Stagione " + entry.stagione));
   }
+  // ------------------------------------------
+
   top.appendChild(heading);
   if (entry.voto !== "" && entry.voto !== undefined && entry.voto !== null) {
     top.appendChild(el("span", "vote-stamp", String(entry.voto)));
