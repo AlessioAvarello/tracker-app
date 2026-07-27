@@ -24,7 +24,7 @@ const CATEGORIES = {
       { key: "durata", label: "Durata totale", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con Lei", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lore", type: "checkbox" }
     ]
   },
   serie: {
@@ -38,7 +38,7 @@ const CATEGORIES = {
       { key: "durata", label: "Durata totale", type: "duration" },
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con Lei", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lore", type: "checkbox" }
     ]
   },
   film: {
@@ -51,7 +51,7 @@ const CATEGORIES = {
       { key: "voto", label: "Voto", type: "number", min: 0, max: 10, step: "any" },
       { key: "data", label: "Data", type: "date" },
       { key: "commento", label: "Commento", type: "textarea" },
-      { key: "conLei", label: "Visto con Lei", type: "checkbox" }
+      { key: "conLei", label: "Visto con Lore", type: "checkbox" }
     ]
   },
   giochi: {
