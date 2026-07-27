@@ -1,14 +1,4 @@
-/**
- * SCHEDARIO — logica dell'app (frontend)
- *
- * Modifiche principali:
- * - I campi duration usano name dinamico field.key + "Ore"/"Minuti" (es. "durataOre", "oreOre").
- * - La categoria "giochi" ora usa type: "duration" per il campo ore, così il frontend fornisce ore/minuti.
- * - Checkbox rinominato a "conLei" per allinearsi al backend.
- * - DoGet / renderArchive aspettano che backend fornisca durate come "4h 30m".
- */
 
-// ====================== 1. CONFIGURAZIONE ======================
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwZcpu5-WtfC0CdTDCG-OEjFQgmeP0CvL8yHlVKNO-PevQaGeHC25jzs_Aqwd9nYU32/exec";
 
 // ====================== 2. DEFINIZIONE CATEGORIE ======================
@@ -283,6 +273,10 @@ function loadArchive(categoriaKey, container) {
         container.appendChild(el("p", "archive-status", "Ancora nessuna voce salvata qui. Aggiungine una dalla scheda \"Aggiungi\"."));
         return;
       }
+      
+      // -- NUOVO: Aggiungiamo il recap prima della lista --
+      container.appendChild(renderArchiveSummary(categoriaKey, res.entries));
+
       const list = el("div", "archive-list");
       res.entries.forEach(function (entry) {
         list.appendChild(renderArchiveCard(categoriaKey, entry));
@@ -353,6 +347,61 @@ function el(tag, className, text) {
   if (className) node.className = className;
   if (text !== undefined) node.textContent = text;
   return node;
+}
+
+// ====================== 7. HELPER RECAP ARCHIVIO ======================
+
+// Converte una stringa "4h 30m" nel totale dei minuti (es. 270)
+function parseDurationStr(str) {
+  if (!str) return 0;
+  const match = str.match(/(\d+)h\s*(\d+)m/);
+  if (match) {
+    return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+  }
+  return 0;
+}
+
+// Converte i minuti totali di nuovo in formato "Xh Ym"
+function formatMinutesToDuration(totalMin) {
+  if (totalMin === 0) return "0h 00m";
+  const h = Math.floor(totalMin / 60);
+  const m = totalMin % 60;
+  return h + "h " + (m < 10 ? "0" : "") + m + "m";
+}
+
+// Crea il riquadro di recap in base alla categoria
+function renderArchiveSummary(categoriaKey, entries) {
+  const wrap = el("div", "archive-summary");
+  
+  let totalItems = entries.length;
+  let totalDurationMins = 0;
+  let totalEpisodes = 0;
+
+  // Calcola i totali
+  entries.forEach(function(entry) {
+    // Somma durata (Film, Anime, Serie) o ore (Giochi)
+    if (entry.durata) totalDurationMins += parseDurationStr(entry.durata);
+    if (entry.ore) totalDurationMins += parseDurationStr(entry.ore);
+
+    // Somma episodi (Anime, Serie)
+    if (entry.episodiTotali) {
+      const ep = Number(entry.episodiTotali);
+      if (!isNaN(ep)) totalEpisodes += ep;
+    }
+  });
+
+  const formattedDuration = formatMinutesToDuration(totalDurationMins);
+
+  // Costruisce il testo in base alla categoria
+  if (categoriaKey === "anime" || categoriaKey === "serie") {
+    wrap.appendChild(el("p", "summary-text", "📺 Voci totali: " + totalItems + " | 📼 Episodi visti: " + totalEpisodes + " | ⏱️ Tempo totale: " + formattedDuration));
+  } else if (categoriaKey === "film") {
+    wrap.appendChild(el("p", "summary-text", "🎬 Film visti: " + totalItems + " | ⏱️ Tempo totale: " + formattedDuration));
+  } else if (categoriaKey === "giochi") {
+    wrap.appendChild(el("p", "summary-text", "🎮 Giochi giocati: " + totalItems + " | ⏱️ Ore totali: " + formattedDuration));
+  }
+
+  return wrap;
 }
 
 // ====================== AVVIO ======================
