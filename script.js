@@ -6,7 +6,7 @@ const CATEGORIES = {
   anime: {
     label: "Anime",
     icon: "🎴",
-    accent: "rose",
+    accent: "blue",
     fields: [
       { key: "nome", label: "Nome serie", type: "text", required: true },
       { key: "stagione", label: "Stagione", type: "number", min: 1, step: 1 },
@@ -21,7 +21,7 @@ const CATEGORIES = {
   serie: {
     label: "Serie TV",
     icon: "📺",
-    accent: "teal",
+    accent: "purple",
     fields: [
       { key: "nome", label: "Nome serie", type: "text", required: true },
       { key: "stagione", label: "Stagione", type: "number", min: 1, step: 1 },
@@ -35,7 +35,7 @@ const CATEGORIES = {
   film: {
     label: "Film",
     icon: "🎬",
-    accent: "gold",
+    accent: "red",
     fields: [
       { key: "nome", label: "Nome film", type: "text", required: true },
       { key: "durata", label: "Durata totale", type: "duration" },
@@ -48,7 +48,7 @@ const CATEGORIES = {
   giochi: {
     label: "Giochi",
     icon: "🎮",
-    accent: "violet",
+    accent: "green",
     // Qui tratto "ore" come duration (ore + minuti) per mostrare "4h 30m" coerentemente.
     fields: [
       { key: "nome", label: "Nome gioco", type: "text", required: true },
@@ -270,24 +270,94 @@ function loadArchive(categoriaKey, container) {
     .then(function (res) {
       if (!res.success) throw new Error(res.error || "Errore sconosciuto");
       container.innerHTML = "";
+      
       if (res.entries.length === 0) {
         container.appendChild(el("p", "archive-status", "Ancora nessuna voce salvata qui. Aggiungine una dalla scheda \"Aggiungi\"."));
         return;
       }
       
-      // -- NUOVO: Aggiungiamo il recap prima della lista --
-      container.appendChild(renderArchiveSummary(categoriaKey, res.entries));
+      // Salviamo le voci in una variabile per non doverle riscaricare ogni volta che ordiniamo
+      const originalEntries = res.entries;
+      let currentSort = "default";
 
-      const list = el("div", "archive-list");
-      res.entries.forEach(function (entry) {
-        list.appendChild(renderArchiveCard(categoriaKey, entry));
+      // 1. Recap Generale (quello che abbiamo aggiunto prima)
+      container.appendChild(renderArchiveSummary(categoriaKey, originalEntries));
+
+      // 2. Controlli di Ordinamento
+      const controls = el("div", "archive-controls");
+      const label = el("span", "sort-label", "Ordina per: ");
+      const select = document.createElement("select");
+      select.className = "sort-select";
+      
+      const options = [
+        { value: "default", text: "Più recenti (Default)" },
+        { value: "nome", text: "Nome (A-Z)" },
+        { value: "durata", text: "Durata (Maggiore - Minore)" },
+        { value: "lore", text: "Visti con Lore" }
+      ];
+
+      options.forEach(function(optData) {
+        const opt = document.createElement("option");
+        opt.value = optData.value;
+        opt.textContent = optData.text;
+        select.appendChild(opt);
       });
-      container.appendChild(list);
+
+      controls.appendChild(label);
+      controls.appendChild(select);
+      container.appendChild(controls);
+
+      // 3. Contenitore della lista dinamica
+      const listContainer = el("div", "archive-list-container");
+      container.appendChild(listContainer);
+
+      // Funzione interna per ordinare e disegnare le card
+      function renderSortedList() {
+        listContainer.innerHTML = "";
+        
+        // Creiamo una copia della lista originale
+        let sorted = originalEntries.slice();
+
+        if (currentSort === "nome") {
+          // Ordine alfabetico (ignorando maiuscole/minuscole)
+          sorted.sort((a, b) => (a.nome || "").localeCompare(b.nome || ""));
+        } else if (currentSort === "durata") {
+          // Ordine di durata/ore usando la funzione che abbiamo creato prima
+          sorted.sort((a, b) => {
+            const durA = parseDurationStr(a.durata || a.ore || "");
+            const durB = parseDurationStr(b.durata || b.ore || "");
+            return durB - durA; // Decrescente (dal più lungo al più corto)
+          });
+        } else if (currentSort === "lore") {
+          // Mette chi è stato visto con Lore per primo
+          sorted.sort((a, b) => {
+            const valA = (a.conLei === true || a.conLei === "Sì") ? 1 : 0;
+            const valB = (b.conLei === true || b.conLei === "Sì") ? 1 : 0;
+            return valB - valA; 
+          });
+        }
+
+        // Creiamo fisicamente le card
+        const list = el("div", "archive-list");
+        sorted.forEach(function (entry) {
+          list.appendChild(renderArchiveCard(categoriaKey, entry));
+        });
+        listContainer.appendChild(list);
+      }
+
+      // Quando l'utente cambia opzione nella tendina, riordiniamo!
+      select.addEventListener("change", function(e) {
+        currentSort = e.target.value;
+        renderSortedList();
+      });
+
+      // Primo caricamento (ordine di default)
+      renderSortedList();
     })
     .catch(function (err) {
       container.innerHTML = "";
       container.appendChild(el("p", "archive-status error",
-        "⚠️ Non riesco a leggere l'archivio: " + err.message + ". Controlla l'URL dell'Apps Script in script.js (vedi README)."));
+        "⚠️ Non riesco a leggere l'archivio: " + err.message + ". Controlla l'URL."));
     });
 }
 

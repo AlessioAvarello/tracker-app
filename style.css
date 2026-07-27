@@ -13,10 +13,11 @@
   --ink: #ede8dd;
   --ink-dim: #8d94a5;
 
-  --rose: #d98aa0;    /* Anime */
-  --teal: #5fb6a6;    /* Serie TV */
-  --gold: #e3a75c;    /* Film */
-  --violet: #9b90dd;  /* Giochi */
+  /* Nuovi colori "tranquilli" */
+  --blue: #799fcb;    /* Anime */
+  --purple: #9a84b0;  /* Serie TV */
+  --red: #cd7e7e;     /* Film */
+  --green: #80ac8c;   /* Giochi */
   --danger: #d1615c;
 
   --font-display: "Fraunces", serif;
@@ -60,10 +61,10 @@ textarea:focus-visible {
 }
 
 /* ---------- colori per categoria ---------- */
-.accent-rose   { --accent: var(--rose); }
-.accent-teal   { --accent: var(--teal); }
-.accent-gold   { --accent: var(--gold); }
-.accent-violet { --accent: var(--violet); }
+.accent-blue   { --accent: var(--blue); }
+.accent-purple { --accent: var(--purple); }
+.accent-red    { --accent: var(--red); }
+.accent-green  { --accent: var(--green); }
 
 /* ====================== HOME ====================== */
 .home { padding-top: 24px; }
@@ -366,20 +367,45 @@ textarea:focus-visible {
   color: var(--ink);
 }
 
+/* --- RECAP ARCHIVIO E ORDINAMENTO (Adattato al tema scuro) --- */
 .archive-summary {
-  background-color: var(--bg-card, #f0f4f8);
+  background-color: var(--bg-elevated);
   border-radius: 8px;
   padding: 12px 16px;
   margin-bottom: 20px;
   text-align: center;
   font-weight: bold;
-  border: 1px solid rgba(0,0,0,0.05);
+  border: 1px solid var(--card-border);
 }
 
 .summary-text {
   margin: 0;
   font-size: 0.95rem;
-  color: var(--text-color, #333);
+  color: var(--ink);
+}
+
+.archive-controls {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 10px;
+}
+
+.sort-label {
+  font-size: 0.9rem;
+  color: var(--ink-dim);
+  font-weight: 500;
+}
+
+.sort-select {
+  padding: 6px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--card-border);
+  background-color: var(--bg-elevated);
+  color: var(--ink);
+  font-size: 0.9rem;
+  cursor: pointer;
 }
 
 /* ====================== RESPONSIVE ====================== */
